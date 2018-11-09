@@ -184,6 +184,7 @@ class WeldObject(object):
                     self.context[name]).ctype_class)
                 encoded.append(self.encoder.encode(self.context[name]))
         end = time.time()
+        print(names, argtypes, encoded)
         if verbose:
             print("Python->Weld:", end - start)
 
@@ -243,7 +244,23 @@ class WeldObject(object):
 
         return result
 
-    def willump_evaluate(self, restype, verbose=True, decode=True, passes=None,
+    _willump_var_num = 0
+    def willump_generate_input_name(self):
+        name = "_inp%d" % self._willump_var_num
+        self._willump_var_num += 1
+
+        return name   
+
+    def willump_to_weld_func(self, names, arg_types):
+        arg_strs = []
+        for i in range(len(names)):
+            arg_strs.append("{0}: {1}".format(str(names[i]),
+                                      str(arg_types[i])))
+        header = "|" + ", ".join(arg_strs) + "|"
+        text = header + " " + self.get_let_statements() + "\n" + self.weld_code
+        return text
+
+    def willump_evaluate(self, input_args, input_types, restype, verbose=True, decode=True, passes=None,
                  num_threads=1, apply_experimental_transforms=False):
 
         # Returns a wrapped ctypes Structure
@@ -254,20 +271,19 @@ class WeldObject(object):
 
         # Encode each input argument. This is the positional argument list
         # which will be wrapped into a Weld struct and passed to the Weld API.
-        names = sorted(self.context.keys())
         big_start = timer()
         start = timer()
+        names = []
         encoded = []
         argtypes = []
-        for name in names:
-            if name in self.argtypes:
-                argtypes.append(self.argtypes[name].ctype_class)
-                encoded.append(self.context[name])
-            else:
-                argtypes.append(self.encoder.py_to_weld_type(
-                    self.context[name]).ctype_class)
-                encoded.append(self.encoder.encode(self.context[name]))
-
+        assert(len(input_args) == len(input_types))
+        for input_arg in input_args:
+            encoded.append(self.encoder.encode(input_arg))
+        for input_type in input_types:
+            argtypes.append(input_type.ctype_class)
+        for _ in range(len(input_args)):
+            names.append(self.willump_generate_input_name())
+        self._willump_var_num = 0
         Args = args_factory(zip(names, argtypes))
         weld_args = Args()
         for name, value in zip(names, encoded):
@@ -279,7 +295,7 @@ class WeldObject(object):
         if verbose:
             print("Python->Weld:", end - start)
         if self.weld_module is None:
-            function = self.to_weld_func()
+            function = self.willump_to_weld_func(names, input_types)
             start = timer()
             conf = cweld.WeldConf()
             err = cweld.WeldError()
