@@ -260,7 +260,9 @@ class WeldObject(object):
         text = header + " " + self.get_let_statements() + "\n" + self.weld_code
         return text
 
-    def willump_evaluate(self, input_args, input_types, restype, verbose=True, decode=True, passes=None,
+    willump_Args = None
+
+    def willump_evaluate(self, input_args, input_types, restype, verbose=True, passes=None,
                  num_threads=1, apply_experimental_transforms=False):
 
         # Returns a wrapped ctypes Structure
@@ -271,29 +273,27 @@ class WeldObject(object):
 
         # Encode each input argument. This is the positional argument list
         # which will be wrapped into a Weld struct and passed to the Weld API.
-        big_start = timer()
-        start = timer()
-        names = []
-        encoded = []
-        argtypes = []
-        assert(len(input_args) == len(input_types))
-        for input_arg in input_args:
-            encoded.append(self.encoder.encode(input_arg))
-        for input_type in input_types:
-            argtypes.append(input_type.ctype_class)
-        for _ in range(len(input_args)):
-            names.append(self.willump_generate_input_name())
-        self._willump_var_num = 0
-        Args = args_factory(zip(names, argtypes))
+        if self.willump_Args is None:
+            names = []
+            encoded = []
+            argtypes = []
+            assert(len(input_args) == len(input_types))
+            for input_arg in input_args:
+                encoded.append(self.encoder.encode(input_arg))
+            for input_type in input_types:
+                argtypes.append(input_type.ctype_class)
+            for _ in range(len(input_args)):
+                names.append(self.willump_generate_input_name())
+            self._willump_var_num = 0
+            self.willump_Args = args_factory(zip(names, argtypes))
+        Args = self.willump_Args
         weld_args = Args()
-        for name, value in zip(names, encoded):
-            setattr(weld_args, name, value)
-
+        for input_arg in input_args:
+            setattr(weld_args, self.willump_generate_input_name(), self.encoder.encode(input_arg))
+        self._willump_var_num = 0
         void_ptr = ctypes.cast(ctypes.byref(weld_args), ctypes.c_void_p)
         arg = cweld.WeldValue(void_ptr)
-        end = timer()
-        if verbose:
-            print("Python->Weld:", end - start)
+
         if self.weld_module is None:
             function = self.willump_to_weld_func(names, input_types)
             start = timer()
@@ -310,41 +310,24 @@ class WeldObject(object):
             if err.code() != 0:
                 raise ValueError("Could not compile function {}: {}".format(
                     function, err.message()))
+            self.willump_conf = cweld.WeldConf()
+            self.willump_conf.set("weld.threads", str(num_threads))
+            self.willump_conf.set("weld.memory.limit", "100000000000")
+            self.willump_conf.set("weld.optimization.applyExperimentalTransforms",
+                     "true" if apply_experimental_transforms else "false")
+            self.willump_err = cweld.WeldError()
             end = timer()
             if verbose:
                 print("Weld compile time:", end - start)
 
-        conf = cweld.WeldConf()
-        conf.set("weld.threads", str(num_threads))
-        conf.set("weld.memory.limit", "100000000000")
-        conf.set("weld.optimization.applyExperimentalTransforms",
-                 "true" if apply_experimental_transforms else "false")
-        err = cweld.WeldError()
-        start = timer()
-        weld_ret = self.weld_module.run(conf, arg, err)
-        end = timer()
-        if err.code() != 0:
+        weld_ret = self.weld_module.run(self.willump_conf, arg, self.willump_err)
+        if self.willump_err.code() != 0:
             raise ValueError(("Error while running function,\n\n"
                               "Error message: {}").format(
                 err.message()))
         ptrtype = POINTER(restype.ctype_class)
         data = ctypes.cast(weld_ret.data(), ptrtype)
-        if verbose:
-            print("Weld:", end - start)
 
-        start = timer()
-        if decode:
-            result = self.decoder.decode(data, restype)
-        else:
-            data = cweld.WeldValue(weld_ret).data()
-            result = ctypes.cast(data, ctypes.POINTER(
-                ctypes.c_int64)).contents.value
-        end = timer()
-        if verbose:
-            print("Weld->Python:", end - start)
-
-        big_end = timer()
-        if verbose:
-            print("Overall time:", big_end - big_start)
+        result = self.decoder.decode(data, restype)
 
         return result
