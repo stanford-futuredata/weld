@@ -11,6 +11,8 @@ import time
 from . import bindings as cweld
 from .types import *
 
+from timeit import default_timer as timer
+
 
 class WeldObjectEncoder(object):
     """
@@ -75,6 +77,7 @@ class WeldObject(object):
     _var_num = 0
     _obj_id = 100
     _registry = {}
+    weld_module = None
 
     def __init__(self, encoder, decoder):
         self.encoder = encoder
@@ -237,5 +240,95 @@ class WeldObject(object):
         end = time.time()
         if verbose:
             print("Weld->Python:", end - start)
+
+        return result
+
+    def willump_evaluate(self, restype, verbose=True, decode=True, passes=None,
+                 num_threads=1, apply_experimental_transforms=False):
+
+        # Returns a wrapped ctypes Structure
+        def args_factory(encoded):
+            class Args(ctypes.Structure):
+                _fields_ = [e for e in encoded]
+            return Args
+
+        # Encode each input argument. This is the positional argument list
+        # which will be wrapped into a Weld struct and passed to the Weld API.
+        names = sorted(self.context.keys())
+        big_start = timer()
+        start = timer()
+        encoded = []
+        argtypes = []
+        for name in names:
+            if name in self.argtypes:
+                argtypes.append(self.argtypes[name].ctype_class)
+                encoded.append(self.context[name])
+            else:
+                argtypes.append(self.encoder.py_to_weld_type(
+                    self.context[name]).ctype_class)
+                encoded.append(self.encoder.encode(self.context[name]))
+
+        Args = args_factory(zip(names, argtypes))
+        weld_args = Args()
+        for name, value in zip(names, encoded):
+            setattr(weld_args, name, value)
+
+        void_ptr = ctypes.cast(ctypes.byref(weld_args), ctypes.c_void_p)
+        arg = cweld.WeldValue(void_ptr)
+        end = timer()
+        if verbose:
+            print("Python->Weld:", end - start)
+        if self.weld_module is None:
+            function = self.to_weld_func()
+            start = timer()
+            conf = cweld.WeldConf()
+            err = cweld.WeldError()
+
+            if passes is not None:
+                passes = ",".join(passes)
+                passes = passes.strip()
+                if passes != "":
+                    conf.set("weld.optimization.passes", passes)
+
+            self.weld_module = cweld.WeldModule(function, conf, err)
+            if err.code() != 0:
+                raise ValueError("Could not compile function {}: {}".format(
+                    function, err.message()))
+            end = timer()
+            if verbose:
+                print("Weld compile time:", end - start)
+
+        conf = cweld.WeldConf()
+        conf.set("weld.threads", str(num_threads))
+        conf.set("weld.memory.limit", "100000000000")
+        conf.set("weld.optimization.applyExperimentalTransforms",
+                 "true" if apply_experimental_transforms else "false")
+        err = cweld.WeldError()
+        start = timer()
+        weld_ret = self.weld_module.run(conf, arg, err)
+        end = timer()
+        if err.code() != 0:
+            raise ValueError(("Error while running function,\n\n"
+                              "Error message: {}").format(
+                err.message()))
+        ptrtype = POINTER(restype.ctype_class)
+        data = ctypes.cast(weld_ret.data(), ptrtype)
+        if verbose:
+            print("Weld:", end - start)
+
+        start = timer()
+        if decode:
+            result = self.decoder.decode(data, restype)
+        else:
+            data = cweld.WeldValue(weld_ret).data()
+            result = ctypes.cast(data, ctypes.POINTER(
+                ctypes.c_int64)).contents.value
+        end = timer()
+        if verbose:
+            print("Weld->Python:", end - start)
+
+        big_end = timer()
+        if verbose:
+            print("Overall time:", big_end - big_start)
 
         return result
