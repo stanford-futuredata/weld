@@ -306,27 +306,29 @@ class WeldObject(object):
                 if passes != "":
                     conf.set("weld.optimization.passes", passes)
 
-            self.weld_module = cweld.WeldModule(function, conf, err)
-            if err.code() != 0:
-                raise ValueError("Could not compile function {}: {}".format(
-                    function, err.message()))
             self.willump_conf = cweld.WeldConf()
             self.willump_conf.set("weld.threads", str(num_threads))
             self.willump_conf.set("weld.memory.limit", "100000000000")
             self.willump_conf.set("weld.optimization.applyExperimentalTransforms",
                      "true" if apply_experimental_transforms else "false")
+            self.weld_module = cweld.WeldModule(function, conf, err, willump_conf=self.willump_conf)
+            if err.code() != 0:
+                raise ValueError("Could not compile function {}: {}".format(
+                    function, err.message()))
             self.willump_err = cweld.WeldError()
+            self.weld_value_data = cweld.weld.weld_value_data
+            self.weld_value_data.argtypes = [cweld.c_weld_value]
+            self.weld_value_data.restype = cweld.c_void_p
             end = timer()
             if verbose:
                 print("Weld compile time:", end - start)
-
-        weld_ret = self.weld_module.run(self.willump_conf, arg, self.willump_err)
+        weld_ret = self.weld_module.run_willump(arg, self.willump_err)
         if self.willump_err.code() != 0:
             raise ValueError(("Error while running function,\n\n"
                               "Error message: {}").format(
                 err.message()))
         ptrtype = POINTER(restype.ctype_class)
-        data = ctypes.cast(weld_ret.data(), ptrtype)
+        data = ctypes.cast(self.weld_value_data(weld_ret), ptrtype)
 
         result = self.decoder.decode(data, restype)
 
