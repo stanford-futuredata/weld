@@ -155,6 +155,9 @@ pub fn compile(program: &SirProgram,
         write_code(module.asm()?, "S", format!("{}-opt", dump_prefix), &conf.dump_code.dir);
         write_code(module.llvm()?, "ll", format!("{}-opt", dump_prefix), &conf.dump_code.dir);
     }
+    if conf.dump_llvm {
+        write_code(module.llvm()?, "ll", "llvm-opt", &conf.dump_code.dir);
+    }
     Ok(Box::new(module))
 }
 

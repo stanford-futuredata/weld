@@ -67,6 +67,9 @@ pub const CONF_LLVM_OPTIMIZATION_LEVEL_KEY: &'static str = "weld.llvm.optimizati
 /// This parameter should be set for compilation.
 pub const CONF_DUMP_CODE_KEY: &'static str = "weld.compile.dumpCode";
 
+/// This parameter should be set for Willump.
+pub const CONF_DUMP_LLVM_KEY: &'static str = "weld.compile.dumpLLVM";
+
 /// Specifies the directory to dump code into.
 /// 
 /// This parameter should be set for compilation.
@@ -91,6 +94,9 @@ pub const CONF_LLVM_OPTIMIZATION_LEVEL_DEFAULT: u32 = 2;
 
 /// Default setting for whether to dump code.
 pub const CONF_DUMP_CODE_DEFAULT: bool = false;
+
+/// Default setting for whether to dump LLVM.
+pub const CONF_DUMP_LLVM_DEFAULT: bool = false;
 
 /// Default setting for whether to trace SIR instructions.
 pub const CONF_TRACE_RUN_DEFAULT: bool = false;

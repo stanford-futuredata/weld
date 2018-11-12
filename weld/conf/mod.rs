@@ -36,6 +36,7 @@ pub struct ParsedConf {
     pub optimization_passes: Vec<Pass>,
     pub llvm_optimization_level: u32,
     pub dump_code: DumpCodeConf,
+    pub dump_llvm: bool,
     pub enable_bounds_checks: bool,
 }
 
@@ -56,6 +57,7 @@ impl ParsedConf {
                 enabled: false,
                 dir: "".to_string()
             },
+            dump_llvm: false,
             enable_bounds_checks: false,
         }
     }
@@ -91,6 +93,10 @@ pub fn parse(conf: &WeldConf) -> WeldResult<ParsedConf> {
     let dump_code_enabled = value.map(|s| parse_bool_flag(&s, "Invalid flag for dumpCode"))
                       .unwrap_or(Ok(CONF_DUMP_CODE_DEFAULT))?;
 
+    let value = get_value(conf, CONF_DUMP_LLVM_KEY);
+    let dump_llvm_enabled = value.map(|s| parse_bool_flag(&s, "Invalid flag for dumpLLVM"))
+                      .unwrap_or(Ok(CONF_DUMP_LLVM_DEFAULT))?;
+
     let value = get_value(conf, CONF_SIR_OPT_KEY);
     let sir_opt_enabled = value.map(|s| parse_bool_flag(&s, "Invalid flag for sirOptimization"))
                       .unwrap_or(Ok(CONF_SIR_OPT_DEFAULT))?;
@@ -116,6 +122,7 @@ pub fn parse(conf: &WeldConf) -> WeldResult<ParsedConf> {
         optimization_passes: passes,
         llvm_optimization_level: level,
         enable_bounds_checks: enable_bounds_check,
+        dump_llvm: dump_llvm_enabled,
         dump_code: DumpCodeConf {
             enabled: dump_code_enabled,
             dir: dump_code_dir,

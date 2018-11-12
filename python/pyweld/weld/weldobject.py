@@ -271,6 +271,8 @@ class WeldObject(object):
                 _fields_ = [e for e in encoded]
             return Args
 
+        # cweld.weld_set_log_level(4)
+
         # Encode each input argument. This is the positional argument list
         # which will be wrapped into a Weld struct and passed to the Weld API.
         if self.willump_Args is None:
@@ -298,6 +300,7 @@ class WeldObject(object):
             function = self.willump_to_weld_func(names, input_types)
             start = timer()
             conf = cweld.WeldConf()
+            conf.set("weld.compile.dumpLLVM", "true")
             err = cweld.WeldError()
 
             if passes is not None:
