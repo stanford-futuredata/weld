@@ -260,6 +260,39 @@ class WeldObject(object):
         text = header + " " + self.get_let_statements() + "\n" + self.weld_code
         return text
 
+    def willump_dump_llvm(self, input_types, verbose=False, passes=None,
+                 num_threads=1, apply_experimental_transforms=False):
+        names = []
+        for _ in range(len(input_types)):
+            names.append(self.willump_generate_input_name())
+        self._willump_var_num = 0
+
+        function = self.willump_to_weld_func(names, input_types)
+        start = timer()
+        conf = cweld.WeldConf()
+        conf.set("weld.compile.dumpLLVM", "true")
+        err = cweld.WeldError()
+
+        if passes is not None:
+            passes = ",".join(passes)
+            passes = passes.strip()
+            if passes != "":
+                conf.set("weld.optimization.passes", passes)
+
+        willump_conf = cweld.WeldConf()
+        willump_conf.set("weld.threads", str(num_threads))
+        willump_conf.set("weld.memory.limit", "100000000000")
+        willump_conf.set("weld.optimization.applyExperimentalTransforms",
+                 "true" if apply_experimental_transforms else "false")
+        cweld.WeldModule(function, conf, err, willump_conf=willump_conf)
+        if err.code() != 0:
+            raise ValueError("Could not compile function {}: {}".format(
+                function, err.message()))
+        end = timer()
+        if verbose:
+            print("Weld compile time:", end - start)
+
+
     willump_Args = None
 
     def willump_evaluate(self, input_args, input_types, restype, verbose=True, passes=None,
@@ -300,7 +333,6 @@ class WeldObject(object):
             function = self.willump_to_weld_func(names, input_types)
             start = timer()
             conf = cweld.WeldConf()
-            conf.set("weld.compile.dumpLLVM", "true")
             err = cweld.WeldError()
 
             if passes is not None:
