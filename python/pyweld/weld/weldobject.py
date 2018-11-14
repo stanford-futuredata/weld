@@ -245,11 +245,11 @@ class WeldObject(object):
         return result
 
     _willump_var_num = 0
+
     def willump_generate_input_name(self):
         name = "_inp%d" % self._willump_var_num
         self._willump_var_num += 1
-
-        return name   
+        return name
 
     def willump_to_weld_func(self, names, arg_types):
         arg_strs = []
@@ -260,8 +260,7 @@ class WeldObject(object):
         text = header + " " + self.get_let_statements() + "\n" + self.weld_code
         return text
 
-    def willump_dump_llvm(self, input_types, verbose=False, passes=None,
-                 num_threads=1, apply_experimental_transforms=False):
+    def willump_dump_llvm(self, input_types, verbose=False, passes=None):
         names = []
         for _ in range(len(input_types)):
             names.append(self.willump_generate_input_name())
@@ -279,92 +278,10 @@ class WeldObject(object):
             if passes != "":
                 conf.set("weld.optimization.passes", passes)
 
-        willump_conf = cweld.WeldConf()
-        willump_conf.set("weld.threads", str(num_threads))
-        willump_conf.set("weld.memory.limit", "100000000000")
-        willump_conf.set("weld.optimization.applyExperimentalTransforms",
-                 "true" if apply_experimental_transforms else "false")
-        cweld.WeldModule(function, conf, err, willump_conf=willump_conf)
+        cweld.WeldModule(function, conf, err)
         if err.code() != 0:
             raise ValueError("Could not compile function {}: {}".format(
                 function, err.message()))
         end = timer()
         if verbose:
             print("Weld compile time:", end - start)
-
-
-    willump_Args = None
-
-    def willump_evaluate(self, input_args, input_types, restype, verbose=True, passes=None,
-                 num_threads=1, apply_experimental_transforms=False):
-
-        # Returns a wrapped ctypes Structure
-        def args_factory(encoded):
-            class Args(ctypes.Structure):
-                _fields_ = [e for e in encoded]
-            return Args
-
-        # cweld.weld_set_log_level(4)
-
-        # Encode each input argument. This is the positional argument list
-        # which will be wrapped into a Weld struct and passed to the Weld API.
-        if self.willump_Args is None:
-            names = []
-            encoded = []
-            argtypes = []
-            assert(len(input_args) == len(input_types))
-            for input_arg in input_args:
-                encoded.append(self.encoder.encode(input_arg))
-            for input_type in input_types:
-                argtypes.append(input_type.ctype_class)
-            for _ in range(len(input_args)):
-                names.append(self.willump_generate_input_name())
-            self._willump_var_num = 0
-            self.willump_Args = args_factory(zip(names, argtypes))
-        Args = self.willump_Args
-        weld_args = Args()
-        for input_arg in input_args:
-            setattr(weld_args, self.willump_generate_input_name(), self.encoder.encode(input_arg))
-        self._willump_var_num = 0
-        void_ptr = ctypes.cast(ctypes.byref(weld_args), ctypes.c_void_p)
-        arg = cweld.WeldValue(void_ptr)
-
-        if self.weld_module is None:
-            function = self.willump_to_weld_func(names, input_types)
-            start = timer()
-            conf = cweld.WeldConf()
-            err = cweld.WeldError()
-
-            if passes is not None:
-                passes = ",".join(passes)
-                passes = passes.strip()
-                if passes != "":
-                    conf.set("weld.optimization.passes", passes)
-
-            self.willump_conf = cweld.WeldConf()
-            self.willump_conf.set("weld.threads", str(num_threads))
-            self.willump_conf.set("weld.memory.limit", "100000000000")
-            self.willump_conf.set("weld.optimization.applyExperimentalTransforms",
-                     "true" if apply_experimental_transforms else "false")
-            self.weld_module = cweld.WeldModule(function, conf, err, willump_conf=self.willump_conf)
-            if err.code() != 0:
-                raise ValueError("Could not compile function {}: {}".format(
-                    function, err.message()))
-            self.willump_err = cweld.WeldError()
-            self.weld_value_data = cweld.weld.weld_value_data
-            self.weld_value_data.argtypes = [cweld.c_weld_value]
-            self.weld_value_data.restype = cweld.c_void_p
-            end = timer()
-            if verbose:
-                print("Weld compile time:", end - start)
-        weld_ret = self.weld_module.run_willump(arg, self.willump_err)
-        if self.willump_err.code() != 0:
-            raise ValueError(("Error while running function,\n\n"
-                              "Error message: {}").format(
-                err.message()))
-        ptrtype = POINTER(restype.ctype_class)
-        data = ctypes.cast(self.weld_value_data(weld_ret), ptrtype)
-
-        result = self.decoder.decode(data, restype)
-
-        return result

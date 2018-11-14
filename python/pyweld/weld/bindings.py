@@ -5,7 +5,6 @@
 import copy
 import platform
 from ctypes import *
-from timeit import default_timer as timer
 
 import pkg_resources
 
@@ -42,7 +41,7 @@ class c_weld_context(c_void_p):
 
 class WeldModule(c_void_p):
 
-    def __init__(self, code, conf, err, willump_conf=None):
+    def __init__(self, code, conf, err):
         weld_module_compile = weld.weld_module_compile
         weld_module_compile.argtypes = [
             c_char_p, c_weld_conf, c_weld_err]
@@ -50,17 +49,6 @@ class WeldModule(c_void_p):
 
         code = c_char_p(code.encode('utf-8'))
         self.module = weld_module_compile(code, conf.conf, err.error)
-        self.weld_module_run = weld.weld_module_run
-        # module, context, arg, &err
-        self.weld_module_run.argtypes = [
-            c_weld_module, c_weld_context, c_weld_value, c_weld_err]
-        self.weld_module_run.restype = c_weld_value
-        if willump_conf is not None:
-            weld_context_new = weld.weld_context_new
-            weld_context_new.argtypes = [c_weld_conf]
-            weld_context_new.restype = c_weld_context
-            self.ctx = weld_context_new(willump_conf.conf)
-
 
     def run(self, conf, arg, err):
         """
@@ -82,18 +70,6 @@ class WeldModule(c_void_p):
         weld_module_run.restype = c_weld_value
         ret = weld_module_run(self.module, ctx, arg.val, err.error)
         return WeldValue(ret, assign=True, _ctx=ctx)
-
-    def run_willump(self, arg, err):
-        """
-        WeldContext is currently hidden from the Python API. We create a new
-        context per Weld run and give ownership of it to the resulting value.
-
-        NOTE: This can leak the context if the result of the Weld run is an
-        error.
-        """
-
-        ret = self.weld_module_run(self.module, self.ctx, arg.val, err.error)
-        return ret
 
     def __del__(self):
         weld_module_free = weld.weld_module_free
