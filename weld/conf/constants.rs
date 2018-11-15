@@ -53,6 +53,33 @@ pub const CONF_SIR_OPT_KEY: &'static str = "weld.optimization.sirOptimization";
 /// This parameter should be set for compilation.
 pub const CONF_LLVM_OPTIMIZATION_LEVEL_KEY: &'static str = "weld.llvm.optimization.level";
 
+/// Toggles LLVM loop unrolling.
+///
+/// This parameter should be set for compilation.
+pub const CONF_LLVM_UNROLLER_KEY: &'static str = "weld.llvm.optimization.unroller";
+
+/// Toggles LLVM vectorization.
+///
+/// Requires targetPasses to be true to have an effect.
+///
+/// This parameter should be set for compilation.
+pub const CONF_LLVM_VECTORIZER_KEY: &'static str = "weld.llvm.optimization.vectorizer";
+
+/// Toggles LLVM target passes.
+///
+/// This parameter should be set for compilation.
+pub const CONF_LLVM_TARGET_PASSES_KEY: &'static str = "weld.llvm.optimization.targetPasses";
+
+/// Toggles full module optimizations.
+///
+/// This parameter should be set for compilation.
+pub const CONF_LLVM_MODULE_OPTS_KEY: &'static str = "weld.llvm.optimization.moduleOpts";
+
+/// Toggles per-function optimizations.
+///
+/// This parameter should be set for compilation.
+pub const CONF_LLVM_FUNC_OPTS_KEY: &'static str = "weld.llvm.optimization.funcOpts";
+
 /// Enables dumping code during compilation.
 ///
 /// This will produce several files in the directory specified by `weld.compile.dumpCodeDir`:
@@ -67,13 +94,25 @@ pub const CONF_LLVM_OPTIMIZATION_LEVEL_KEY: &'static str = "weld.llvm.optimizati
 /// This parameter should be set for compilation.
 pub const CONF_DUMP_CODE_KEY: &'static str = "weld.compile.dumpCode";
 
-/// This parameter should be set for Willump.
-pub const CONF_DUMP_LLVM_KEY: &'static str = "weld.compile.dumpLLVM";
-
 /// Specifies the directory to dump code into.
-/// 
+///
 /// This parameter should be set for compilation.
 pub const CONF_DUMP_CODE_DIR_KEY: &'static str = "weld.compile.dumpCodeDir";
+
+/// Specifies the filename prefix for dumped code.
+///
+/// This parameter should be set for compilation.
+pub const CONF_DUMP_CODE_FILENAME_KEY: &'static str = "weld.compile.dumpCodeFilename";
+
+/// Specifies the formats to dump for dumped code.
+///
+/// This key does not have an explicit default value: if it is not specified, all formats
+/// are dumped. The possible formats are:
+///
+/// weld,weldopt,llvm,llvmopt,sir,assembly.
+///
+/// This parameter should be set for compilation.
+pub const CONF_DUMP_CODE_FORMATS_KEY: &'static str = "weld.compile.dumpCodeFormats";
 
 /// Enables runtime bounds checking for loops before executing them.
 ///
@@ -92,11 +131,23 @@ pub const CONF_SIR_OPT_DEFAULT: bool = true;
 /// Default LLVM optimization level.
 pub const CONF_LLVM_OPTIMIZATION_LEVEL_DEFAULT: u32 = 2;
 
+/// Default LLVM loop unroller setting.
+pub const CONF_LLVM_UNROLLER_DEFAULT: bool = true;
+
+/// Default LLVM loop vectorizer setting.
+pub const CONF_LLVM_VECTORIZER_DEFAULT: bool = true;
+
+/// Default LLVM target analysis passes.
+pub const CONF_LLVM_TARGET_PASSES_DEFAULT: bool = true;
+
+/// Default LLVM module passes setting.
+pub const CONF_LLVM_MODULE_OPTS_DEFAULT: bool = true;
+
+/// Default LLVM function passes setting.
+pub const CONF_LLVM_FUNC_OPTS_DEFAULT: bool = true;
+
 /// Default setting for whether to dump code.
 pub const CONF_DUMP_CODE_DEFAULT: bool = false;
-
-/// Default setting for whether to dump LLVM.
-pub const CONF_DUMP_LLVM_DEFAULT: bool = false;
 
 /// Default setting for whether to trace SIR instructions.
 pub const CONF_TRACE_RUN_DEFAULT: bool = false;
@@ -112,6 +163,9 @@ pub const CONF_DUMP_CODE_DIR_DEFAULT: &'static str = ".";
 
 /// Default set of optimization passes.
 pub const CONF_OPTIMIZATION_PASSES_DEFAULT: &[&'static str] =  &[
+"inline-zip",
+"inline-let",
+"inline-apply",
 "loop-fusion",
 "unroll-static-loop",
 "infer-size",

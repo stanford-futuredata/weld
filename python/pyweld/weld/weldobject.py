@@ -260,7 +260,8 @@ class WeldObject(object):
         text = header + " " + self.get_let_statements() + "\n" + self.weld_code
         return text
 
-    def willump_dump_llvm(self, input_types, verbose=False, passes=None):
+    def willump_dump_llvm(self, input_types, input_directory=".", input_filename="llvm-code-opt.ll",
+                          verbose=False, passes=None):
         names = []
         for _ in range(len(input_types)):
             names.append(self.willump_generate_input_name())
@@ -269,7 +270,10 @@ class WeldObject(object):
         function = self.willump_to_weld_func(names, input_types)
         start = timer()
         conf = cweld.WeldConf()
-        conf.set("weld.compile.dumpLLVM", "true")
+        conf.set("weld.compile.dumpCode", "true")
+        conf.set("weld.compile.dumpCodeDir", input_directory)
+        conf.set("weld.compile.dumpCodeFilename", input_filename)
+        conf.set("weld.compile.dumpCodeFormats", "llvmopt")
         err = cweld.WeldError()
 
         if passes is not None:
