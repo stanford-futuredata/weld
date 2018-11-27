@@ -211,6 +211,35 @@ class WeldDouble(WeldType):
         return c_double
 
 
+class WeldStr(WeldType):
+    """An alias for WeldVec(WeldChar) used for Python strings.
+    """
+
+    def __str__(self):
+        """Summary
+
+        Returns:
+            TYPE: Description
+        """
+        return "vec[%s]" % str(WeldChar())
+
+    @property
+    def ctype_class(self):
+        """Summary
+
+        Returns:
+            TYPE: Description
+        """
+        class Vec(Structure):
+            """Summary
+            """
+            _fields_ = [
+                ("ptr", POINTER(WeldChar.ctype_class)),
+                ("size", c_long),
+            ]
+        return Vec
+
+
 class WeldVec(WeldType):
     """Summary
 

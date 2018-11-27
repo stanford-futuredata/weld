@@ -273,7 +273,7 @@ class WeldObject(object):
         conf.set("weld.compile.dumpCode", "true")
         conf.set("weld.compile.dumpCodeDir", input_directory)
         conf.set("weld.compile.dumpCodeFilename", input_filename)
-        conf.set("weld.compile.dumpCodeFormats", "llvmopt")
+        conf.set("weld.compile.dumpCodeFormats", "llvmopt,weldopt")
         err = cweld.WeldError()
 
         if passes is not None:
