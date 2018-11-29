@@ -695,10 +695,16 @@ pub enum ExprKind {
         index: Box<Expr>,
         size: Box<Expr>,
     },
-    /// Sort a vector.
+    /// Sorts a vector.
+    /// 
+    /// The sort operator takes a vector comprised of any non-builder, non-SIMD, or non-dictionary type
+    /// and returns a new sorted vector. The sort order is determined by `cmpfunc`.
+    ///
+    /// The comparator takes two arguments `x` and `y` whose type is the vector element type and
+    /// returns a positive `i32` if `x > y`, zero if `x == y`, and a negative number of `x < y`.
     Sort {
         data: Box<Expr>,
-        keyfunc: Box<Expr>,
+        cmpfunc: Box<Expr>,
     },
     /// Assign a `value` to `name`, and then evaluate `body`.
     ///
@@ -1017,8 +1023,8 @@ impl Expr {
             } => vec![data.as_ref(), index.as_ref(), size.as_ref()],
             Sort {
                 ref data,
-                ref keyfunc,
-            } => vec![data.as_ref(), keyfunc.as_ref()],
+                ref cmpfunc,
+            } => vec![data.as_ref(), cmpfunc.as_ref()],
             Merge {
                 ref builder,
                 ref value,
@@ -1128,8 +1134,8 @@ impl Expr {
             } => vec![data.as_mut(), index.as_mut(), size.as_mut()],
             Sort {
                 ref mut data,
-                ref mut keyfunc,
-            } => vec![data.as_mut(), keyfunc.as_mut()],
+                ref mut cmpfunc,
+            } => vec![data.as_mut(), cmpfunc.as_mut()],
             Merge {
                 ref mut builder,
                 ref mut value,

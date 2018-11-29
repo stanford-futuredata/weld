@@ -42,7 +42,12 @@ pub fn binop_expr(kind: BinOpKind, left: Expr, right: Expr) -> WeldResult<Expr> 
     if left.ty != right.ty {
         compile_err!("Internal error: Mismatched types in binop_expr")
     } else {
-        let ty = left.ty.clone();
+        let ty = if kind.is_comparison() {
+            Scalar(ScalarKind::Bool)
+        } else {
+            left.ty.clone()
+        };
+        
         new_expr(BinOp {
                      kind: kind,
                      left: Box::new(left),
@@ -218,16 +223,19 @@ pub fn slice_expr(data: Expr, index: Expr, size: Expr) -> WeldResult<Expr> {
              ty)
 }
 
-pub fn sort_expr(data: Expr, keyfunc: Expr) -> WeldResult<Expr> {
+pub fn sort_expr(data: Expr, cmpfunc: Expr) -> WeldResult<Expr> {
     let mut type_checked = false;
 
     if let Vector(ref vec_ty) = data.ty {
-        if let Function(ref params, ref body) = keyfunc.ty {
-            if params.len() == 1 && params[0] == **vec_ty {
-                if let Scalar(_) = **body {
-                    type_checked = true;
+        if let Function(ref params, ref body) = cmpfunc.ty {
+            if params.len() == 2 && params[0] == **vec_ty {
+                // Return type must be i32.
+                if let Scalar(ScalarKind::I32) = **body {
+                    // Both parameters must be of the same type.
+                    if params[0] == params[1] {
+                        type_checked = true;
+                    }
                 }
-
             }
         }
     }
@@ -239,7 +247,7 @@ pub fn sort_expr(data: Expr, keyfunc: Expr) -> WeldResult<Expr> {
     let ty = data.ty.clone();
     new_expr(Sort {
                  data: Box::new(data),
-                 keyfunc: Box::new(keyfunc),
+                 cmpfunc: Box::new(cmpfunc),
              },
              ty)
 }
@@ -568,6 +576,16 @@ fn binop_test() {
 
     assert_eq!(print_expr_without_indent(&expr), "(1+1)");
     assert_eq!(expr.ty, Scalar(ScalarKind::I32));
+}
+
+#[test]
+fn comparison_test() {
+    let right = literal_expr(LiteralKind::I32Literal(2)).unwrap();
+    let left = literal_expr(LiteralKind::I32Literal(1)).unwrap();
+    let expr = binop_expr(BinOpKind::GreaterThan, left, right).unwrap();
+
+    assert_eq!(print_expr_without_indent(&expr), "(1>2)");
+    assert_eq!(expr.ty, Scalar(ScalarKind::Bool));
 }
 
 #[test]
