@@ -297,6 +297,32 @@ class WeldVec(WeldType):
         return WeldVec._singletons[self.elemType]
 
 
+class WeldDict(WeldType):
+    """Summary
+
+    Attributes:
+        keyType (TYPE): Description
+        valueType (TYPE): Description
+    """
+    def __init__(self, keyType, valueType):
+        self.keyType = keyType
+        self.valueType = valueType
+
+    def __str__(self):
+        """Summary
+
+        Returns:
+            TYPE: Description
+        """
+        return "dict[%s, %s]" % (str(self.keyType), str(self.valueType))
+
+    @property
+    def ctype_class(self):
+        """Not implemented
+        """
+        return None
+
+
 class WeldStruct(WeldType):
     """Summary
 

@@ -270,6 +270,7 @@ class WeldObject(object):
         function = self.willump_to_weld_func(names, input_types)
         start = timer()
         conf = cweld.WeldConf()
+        # conf.set("weld.compile.traceExecution", "true")
         conf.set("weld.compile.dumpCode", "true")
         conf.set("weld.compile.dumpCodeDir", input_directory)
         conf.set("weld.compile.dumpCodeFilename", input_filename)
