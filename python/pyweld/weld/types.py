@@ -214,6 +214,7 @@ class WeldDouble(WeldType):
 class WeldStr(WeldType):
     """An alias for WeldVec(WeldChar) used for Python strings.
     """
+    elemType = WeldChar()
 
     def __str__(self):
         """Summary
