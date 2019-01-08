@@ -324,6 +324,29 @@ class WeldDict(WeldType):
         return None
 
 
+class WeldCSR(WeldType):
+    """Summary
+
+    Attributes:
+        elemType (TYPE): Description
+    """
+    def __init__(self, elemType):
+        self.elemType = elemType
+
+    def __str__(self):
+        """Summary
+
+        Returns:
+            TYPE: Description
+        """
+        return "vec[vec[%s]]" % (str(self.elemType))
+
+    @property
+    def ctype_class(self):
+        """Not implemented
+        """
+        return None
+
 class WeldStruct(WeldType):
     """Summary
 
