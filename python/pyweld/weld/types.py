@@ -399,3 +399,34 @@ class WeldStruct(WeldType):
             WeldStruct._singletons[
                 frozenset(self.field_types)] = struct_factory(self.field_types)
         return WeldStruct._singletons[frozenset(self.field_types)]
+
+
+class WeldPandas(WeldType):
+    """Summary
+
+    Alias for WeldStruct
+    """
+    _singletons = {}
+
+    def __init__(self, field_types):
+        """Summary
+
+        Args:
+            field_types (TYPE): Description
+        """
+        assert False not in [isinstance(e, WeldType) for e in field_types]
+        self.field_types = field_types
+
+    def __str__(self):
+        """Summary
+
+        Returns:
+            TYPE: Description
+        """
+        return "{" + ",".join([str(f) for f in self.field_types]) + "}"
+
+    @property
+    def ctype_class(self):
+        """Not implemented
+        """
+        return None
