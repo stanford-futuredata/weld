@@ -409,14 +409,16 @@ class WeldPandas(WeldType):
     """
     _singletons = {}
 
-    def __init__(self, field_types):
+    def __init__(self, field_types, column_names):
         """Summary
 
         Args:
             field_types (TYPE): Description
         """
         assert False not in [isinstance(e, WeldType) for e in field_types]
+        assert(len(column_names) == len(field_types))
         self.field_types = field_types
+        self.column_names = column_names
 
     def __str__(self):
         """Summary
