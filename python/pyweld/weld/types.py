@@ -340,7 +340,7 @@ class WeldCSR(WeldType):
         Returns:
             TYPE: Description
         """
-        return "vec[vec[%s]]" % (str(self.elemType))
+        return "{" + ",".join([str(f) for f in self.field_types]) + "}"
 
     @property
     def ctype_class(self):
