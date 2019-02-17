@@ -253,7 +253,7 @@ impl HasPointer for Type {
             Dict(_, _) => true,
             Builder(_, _) => true,
             Struct(ref tys) => tys.iter().any(|ref t| t.has_pointer()),
-            Function(_, _) | Unknown => unreachable!(),
+            Function(_, _) | Unknown | Alias(_,_) => unreachable!(),
         }
     }
 }
@@ -1211,6 +1211,17 @@ impl LlvmGenerator {
                 use self::numeric::NumericExpressionGen;
                 self.gen_not(context, statement)
             }
+            Assert(ref cond) => {
+                let output_pointer = context.get_value(output)?;
+                let cond = self.load(context.builder, context.get_value(cond)?)?;
+                let result = self.intrinsics.call_weld_run_assert(context.builder,
+                                                             context.get_run(),
+                                                             cond,
+                                                             None);
+                // If assert returns, this expression returns true.
+                LLVMBuildStore(context.builder, result, output_pointer);
+                Ok(())
+            }
             NewBuilder { .. } => {
                 use self::builder::BuilderExpressionGen;
                 self.gen_new_builder(context, statement)
@@ -1497,7 +1508,7 @@ impl LlvmGenerator {
                 }
                 self.vectors.get(elem_type).unwrap().vector_ty
             }
-            Function(_, _) | Unknown => unreachable!(),
+            Function(_, _) | Unknown | Alias(_, _) => unreachable!(),
         };
         Ok(result)
     }

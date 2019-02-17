@@ -32,6 +32,7 @@ pub enum Token {
     TResult,
     TLet,
     TMacro,
+    TType,
     TI8,
     TI16,
     TI32,
@@ -69,6 +70,7 @@ pub enum Token {
     TTanh,
     TSimd,
     TSelect,
+    TAssert,
     TBroadcast,
     TSerialize,
     TDeserialize,
@@ -161,6 +163,19 @@ impl Token {
             _ => true
         }
     }
+
+    /// Returns true if the token signifies the beginning of a type parse.
+    ///
+    /// This does not include aliases, which can be any symbol name.
+    pub fn signals_type(&self) -> bool {
+        use self::Token::*;
+        match *self {
+            TI8 | TI16 | TI32 | TI64 | TU8 | TU16 | TU32 | TU64 | TF32 | TF64 | TBool
+                | TVec | TSimd | TAppender | TMerger | TDict | TDictMerger | TGroupMerger
+                | TVecMerger | TOpenBrace | TQuestion => true,
+            _ => false,
+        }
+    }
 }
 
 /// Break up a string into tokens.
@@ -176,8 +191,8 @@ pub fn tokenize(input: &str) -> WeldResult<Vec<Token>> {
         // Regular expressions for various types of tokens.
         static ref KEYWORD_RE: Regex = Regex::new(
             "^(if|for|zip|len|lookup|optlookup|keyexists|slice|sort|exp|sin|cos|tan|asin|acos|atan|sinh|cosh|tanh|\
-             log|erf|sqrt|simd|select|broadcast|serialize|deserialize|\
-             iterate|cudf|simditer|fringeiter|rangeiter|nditer|iter|merge|result|let|true|false|macro|\
+             log|erf|sqrt|simd|select|assert|broadcast|serialize|deserialize|\
+             iterate|cudf|simditer|fringeiter|rangeiter|nditer|iter|merge|result|let|true|false|macro|type|\
              i8|i16|i32|i64|u8|u16|u32|u64|f32|f64|bool|vec|dict|appender|merger|vecmerger|\
              dictmerger|groupmerger|tovec|min|max|pow)$").unwrap();
 
@@ -225,6 +240,7 @@ pub fn tokenize(input: &str) -> WeldResult<Vec<Token>> {
                             "merge" => TMerge,
                             "result" => TResult,
                             "macro" => TMacro,
+                            "type" => TType,
                             "i8" => TI8,
                             "i16" => TI16,
                             "i32" => TI32,
@@ -272,6 +288,7 @@ pub fn tokenize(input: &str) -> WeldResult<Vec<Token>> {
                             "cudf" => TCUDF,
                             "simd" => TSimd,
                             "select" => TSelect,
+                            "assert" => TAssert,
                             "broadcast" => TBroadcast,
                             "serialize" => TSerialize,
                             "deserialize" => TDeserialize,
@@ -400,6 +417,7 @@ impl fmt::Display for Token {
                     TResult => "result",
                     TLet => "let",
                     TMacro => "macro",
+                    TType => "type",
                     TI8 => "i8",
                     TI16 => "i16",
                     TI32 => "i32",
@@ -447,6 +465,7 @@ impl fmt::Display for Token {
                     TCUDF => "cudf",
                     TSimd => "simd",
                     TSelect => "select",
+                    TAssert => "assert",
                     TBroadcast => "broadcast",
                     TSerialize => "serialize",
                     TDeserialize => "deserialize",
