@@ -84,6 +84,28 @@ class WeldChar(WeldType):
         return c_wchar_p
 
 
+class WeldUnsignedChar(WeldType):
+    """Summary
+    """
+
+    def __str__(self):
+        """Summary
+
+        Returns:
+            TYPE: Description
+        """
+        return "u8"
+
+    @property
+    def ctype_class(self):
+        """Summary
+
+        Returns:
+            TYPE: Description
+        """
+        return c_ubyte
+
+
 class WeldBit(WeldType):
     """Summary
     """
@@ -296,6 +318,24 @@ class WeldVec(WeldType):
         if self.elemType not in WeldVec._singletons:
             WeldVec._singletons[self.elemType] = vec_factory(self.elemType)
         return WeldVec._singletons[self.elemType]
+
+
+class WeldSeriesPandas(WeldVec):
+    """Summary
+
+    Attributes:
+        elemType (TYPE): Description
+        column_names:  List[str]
+    """
+    def __init__(self, elemType, column_names):
+        """Summary
+
+        Args:
+            elemType (TYPE): Description
+        column_names:  List[str]
+        """
+        super().__init__(elemType)
+        self.column_names = column_names
 
 
 class WeldDict(WeldType):
