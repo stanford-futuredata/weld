@@ -370,9 +370,10 @@ class WeldCSR(WeldType):
     Attributes:
         elemType (TYPE): Description
     """
-    def __init__(self, elemType):
+    def __init__(self, elemType, width=None):
         self.elemType = elemType
         self.field_types = [WeldVec(WeldLong()), WeldVec(WeldLong()), WeldVec(elemType), WeldLong(), WeldLong()]
+        self.width = width
 
     def __str__(self):
         """Summary
