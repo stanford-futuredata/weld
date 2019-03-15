@@ -150,6 +150,28 @@ class WeldInt16(WeldType):
         return c_int16
 
 
+class WeldUnsignedInt16(WeldType):
+    """Summary
+    """
+
+    def __str__(self):
+        """Summary
+
+        Returns:
+            TYPE: Description
+        """
+        return 'u16'
+
+    @property
+    def ctype_class(self):
+        """Summary
+
+        Returns:
+            TYPE: Description
+        """
+        return c_uint16
+
+
 class WeldInt(WeldType):
     """Summary
     """
@@ -172,6 +194,28 @@ class WeldInt(WeldType):
         return c_int
 
 
+class WeldUnsignedInt(WeldType):
+    """Summary
+    """
+
+    def __str__(self):
+        """Summary
+
+        Returns:
+            TYPE: Description
+        """
+        return "u32"
+
+    @property
+    def ctype_class(self):
+        """Summary
+
+        Returns:
+            TYPE: Description
+        """
+        return c_uint
+
+
 class WeldLong(WeldType):
     """Summary
     """
@@ -192,6 +236,28 @@ class WeldLong(WeldType):
             TYPE: Description
         """
         return c_long
+
+
+class WeldUnsignedLong(WeldType):
+    """Summary
+    """
+
+    def __str__(self):
+        """Summary
+
+        Returns:
+            TYPE: Description
+        """
+        return "u64"
+
+    @property
+    def ctype_class(self):
+        """Summary
+
+        Returns:
+            TYPE: Description
+        """
+        return c_ulong
 
 
 class WeldFloat(WeldType):
