@@ -340,13 +340,14 @@ class WeldVec(WeldType):
     # type), we cache it here.
     _singletons = {}
 
-    def __init__(self, elemType):
+    def __init__(self, elemType, width=None):
         """Summary
 
         Args:
             elemType (TYPE): Description
         """
         self.elemType = elemType
+        self.width = width
 
     def __str__(self):
         """Summary
