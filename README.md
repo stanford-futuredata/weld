@@ -40,50 +40,20 @@ To install Rust, follow the steps [here](https://rustup.rs). You can verify that
 $ rustup update stable
 ```
 
-#### MacOS LLVM Installation
-
-To install LLVM on macOS, first install [Homebrew](https://brew.sh/). Then:
-
-```bash
-$ brew install llvm@6
-```
-
-Weld's dependencies require `llvm-config` on `$PATH`, so you may need to create a symbolic link so the correct `llvm-config` is picked up (note that you might need to add `sudo` at the start of this command):
-
-```bash
-$ ln -s /usr/local/Cellar/llvm/6.0.0/bin/llvm-config /usr/local/bin/llvm-config
-```
-
-To make sure this worked correctly, run `llvm-config --version`. You should see `6.0.x`.
-
-Enter the `weld_rt/cpp` directory and try running `make`. If the command fails with errors related to missing header files, you may need to install XCode and/or XCode Command Line Tools. Run `xcode-select --install` to do this.
-
 #### Ubuntu LLVM Installation
 
-To install LLVM on Ubuntu, get the LLVM 6.0 sources and then `apt-get`:
-
-On Ubuntu 16.04 (Xenial):
+On Ubuntu 18.04 (Bionic):
 ```bash
-wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-sudo apt-add-repository "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-6.0 main"
-sudo apt-get update
-sudo apt-get install llvm-6.0-dev clang-6.0
+$ wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+$ sudo apt-add-repository "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-6.0 main"
+$ sudo apt-get update
+$ sudo apt-get install llvm-6.0-dev clang-6.0
 ```
-On Ubuntu 14.04 (Trusty):
-```bash
-wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-sudo apt-add-repository "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-6.0 main"
-
-# gcc backport is required on 14.04, for libstdc++. See https://apt.llvm.org/
-sudo apt-add-repository "deb http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu trusty main"
-sudo apt-get update
-sudo apt-get install llvm-6.0-dev clang-6.0
-```
-
-Weld's dependencies require `llvm-config`, so you may need to create a symbolic link so the correct `llvm-config` is picked up. `sudo` may be required:
+Weld's dependencies require `llvm-config` and `clang++`, so you may need to create a symbolic link so the correct `llvm-config` and `clang++` are picked up. `sudo` may be required:
 
 ```bash
 $ ln -s /usr/bin/llvm-config-6.0 /usr/local/bin/llvm-config
+$ ln -s /usr/bin/clang++-6.0 /usr/local/bin/clang++
 ```
 
 To make sure this worked correctly, run `llvm-config --version`. You should see `6.0.x` or newer.
@@ -99,8 +69,9 @@ $ sudo apt-get install zlib1g-dev
 With LLVM and Rust installed, you can build Weld. Clone this repository, set the `WELD_HOME` environment variable, and build using `cargo`:
 
 ```bash
-$ git clone https://www.github.com/weld-project/weld
-$ cd weld/
+$ git clone https://github.com/stanford-futuredata/weld-willump.git
+$ cd weld-willump/
+$ git checkout llvm-st
 $ export WELD_HOME=`pwd`
 $ cargo build --release
 ```
